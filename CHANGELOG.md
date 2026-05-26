@@ -4,6 +4,8 @@ All notable changes to this skill repository should be documented here.
 
 ## Unreleased
 
+## v0.2.0 - 2026-05-26
+
 - Added Power Automate naming convention guidance for flows, actions, scopes, variables, solution publisher prefixes, connection references, and environment variables, sourced from Microsoft Learn.
 - Added pre-import drift checks, deployment settings guidance, connector contract review guidance, and behavioral eval scenarios.
 - Hardened TRY/CATCH logging guidance to avoid raw TRY results in email by default and terminate failed business processing as `Failed`.
