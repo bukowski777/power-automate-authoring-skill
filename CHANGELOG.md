@@ -5,6 +5,11 @@ All notable changes to this skill repository should be documented here.
 ## Unreleased
 
 - Added Power Automate naming convention guidance for flows, actions, scopes, variables, solution publisher prefixes, connection references, and environment variables, sourced from Microsoft Learn.
+- Added pre-import drift checks, deployment settings guidance, connector contract review guidance, and behavioral eval scenarios.
+- Hardened TRY/CATCH logging guidance to avoid raw TRY results in email by default and terminate failed business processing as `Failed`.
+- Added a semantic workflow JSON validator with unit tests for `runAfter`, expression references, variable references, and hardcoded sensitive values.
+- Fixed relative `--output-dir` packaging by normalizing the output path before staging.
+- Hardened CI/release validation with ShellCheck enforcement in CI and job timeouts.
 
 ## v0.1.0 - 2026-05-26
 

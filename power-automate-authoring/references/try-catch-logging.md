@@ -2,6 +2,8 @@
 
 These snippets are generic templates for cloud flow workflow JSON. Rename actions and variables to match the target flow. Keep connector-specific actions, recipients, and log destinations project-defined.
 
+Default to concise alerting. Email should contain an operational summary only; raw connector outputs can contain personal data, document contents, SQL rows, HTTP payloads, or other sensitive values. Store detailed payloads only in an approved log destination and truncate raw TRY results by default.
+
 ## Required Shape
 
 Use a business scope named `TRY_<domain>`, then a catch scope named `CATCH_<domain>`.
@@ -74,7 +76,7 @@ Inside `CATCH_<domain>`, add these actions before sending email or writing to a 
     "sourceItemId": "@variables('varLogSourceItemId')",
     "sourceFileName": "@variables('varLogSourceFileName')",
     "failedActions": "@body('Select_catch_error_details')",
-    "rawTryResult": "@outputs('Compose_catch_try_result')"
+    "rawTryResultExcerpt": "@take(string(outputs('Compose_catch_try_result')), 4000)"
   },
   "runAfter": {
     "Select_catch_error_details": [
@@ -88,9 +90,9 @@ Create the `varLogBusinessKey`, `varLogSourceItemId`, and `varLogSourceFileName`
 
 If the TRY scope contains nested scopes, `result('TRY_<domain>')` may only surface the nested scope result. Add similar `result('<Nested_scope_name>')` logging for nested scopes whose inner action names matter.
 
-## Email Body Expression
+## Email Summary Expression
 
-Use this in the body of a mail action after `Compose_catch_log_payload`.
+Use this in the body of a mail action after `Compose_catch_log_payload`. Do not include `outputs('Compose_catch_try_result')` in email by default.
 
 ```text
 concat(
@@ -112,25 +114,39 @@ concat(
     '>',
     '&gt;'
   ),
-  '</pre>',
-  '<h3>Raw TRY result</h3>',
-  '<pre>',
-  replace(
-    replace(
-      replace(string(outputs('Compose_catch_try_result')), '&', '&amp;'),
-      '<',
-      '&lt;'
-    ),
-    '>',
-    '&gt;'
-  ),
   '</pre>'
 )
 ```
+
+## Fail The Flow After Logging
+
+Add a `Terminate_Failed` action after the final approved log or alert action unless the user explicitly wants the flow run to succeed after CATCH. If `Compose_catch_log_payload` is the final catch action, use this shape:
+
+```json
+"Terminate_Failed": {
+  "type": "Terminate",
+  "inputs": {
+    "runStatus": "Failed",
+    "runError": {
+      "code": "FLOW_BUSINESS_ERROR",
+      "message": "Business processing failed. See structured log payload."
+    }
+  },
+  "runAfter": {
+    "Compose_catch_log_payload": [
+      "Succeeded"
+    ]
+  }
+}
+```
+
+If an email or log-store action follows `Compose_catch_log_payload`, make `Terminate_Failed` run after that final action. Decide deliberately whether `Terminate_Failed` should also run after log/alert failure or timeout.
 
 ## Validation Checklist
 
 - Force one controlled failure and verify the catch scope runs.
 - Confirm the email or log record contains at least one failed action with message and tracking ID when available.
 - Confirm the catch path still runs if the failed action has no `error.message`.
-- Confirm payload size is acceptable for the selected email/log destination.
+- Confirm email excludes raw TRY results unless an approved exception exists.
+- Confirm payload size is acceptable for the selected log destination.
+- Confirm the flow run terminates as `Failed` after CATCH unless success-after-catch was explicitly requested.

@@ -41,7 +41,9 @@ Use [references/try-catch-logging.md](references/try-catch-logging.md) when addi
 
 Use [references/naming-conventions.md](references/naming-conventions.md) when creating, renaming, reviewing, or documenting flow components. Preserve the project convention first; introduce a new convention only when none exists.
 
-Before changing anything, identify the tenant/environment, solution, flow, allowed scope, connection account, deployment path, rollback option, and whether import/publish is explicitly authorized.
+Use [references/connector-contracts.md](references/connector-contracts.md) when a change touches SharePoint, Dataverse, SQL, HTTP, Outlook, Teams, OCR, or AI Builder connector behavior.
+
+Before changing anything, identify the tenant/environment, solution, flow, allowed scope, connection account, deployment path, rollback option, whether a deployment settings file is required, whether another maker may edit the flow during the change window, whether the flow must remain enabled after import, whether failed business processing must terminate the flow as `Failed`, and whether import/publish is explicitly authorized.
 
 Never store secrets, tokens, tenant credentials, private URLs, personal data, exported run payloads, or connector-specific sensitive values in docs, commits, screenshots, logs, or reusable examples.
 
@@ -58,10 +60,13 @@ Ask before running tenant-impacting commands such as import, publish, enable, di
 7. Inspect existing naming conventions, actions, `runAfter`, connection references, expressions, variables, trigger shape, and solution dependencies before editing.
 8. Patch only the required workflow and actions.
 9. Run `jq empty` on edited workflow JSON.
-10. Pack with `pac solution pack`.
-11. Import with `pac solution import --publish-changes --force-overwrite` only after explaining tenant impact and rollback/recovery options.
-12. Re-export and inspect the deployed definition.
-13. Recommend or run real flow tests, including at least one error path for logging changes.
+10. Run semantic workflow checks when available, such as `python3 scripts/validate-workflow-json.py "$PA_WORK_DIR/unpacked/Workflows/<workflow-file>.json"`.
+11. Pack with `pac solution pack`.
+12. Create and review a deployment settings file when connection references or environment variables must be supplied during import.
+13. Re-export before import and compare against the initial baseline to detect portal-side drift.
+14. Import with `pac solution import --publish-changes --force-overwrite` only after explaining tenant impact and rollback/recovery options.
+15. Re-export and inspect the deployed definition.
+16. Recommend or run real flow tests, including at least one error path for logging changes.
 
 ## Editing Rules
 
@@ -97,7 +102,9 @@ For production flows, add or preserve:
 - Error collection from `result('TRY_<domain>')`.
 - Filter/select actions that extract failed action name, status, code, message, timings, and tracking ID from the TRY result.
 - A structured log payload before any email or log-store action.
-- A readable error summary with flow name, environment, run ID, business context, item/file/entity, action name, status, code, message, timestamps, tracking ID when available, and raw TRY result excerpt.
+- A readable error summary with flow name, environment, run ID, business context, item/file/entity, action name, status, code, message, timestamps, and tracking ID when available.
+- No raw TRY result in email by default; keep raw details truncated and only in an approved log destination.
+- A `Terminate_Failed` action after the final log/alert action unless success-after-catch is an explicit business requirement.
 - Logging destination defined by the project, not hardcoded from this generic skill.
 
 ## Expression Guardrails
@@ -130,13 +137,21 @@ Safe inspection commands:
 - `pac solution export ...`
 - `pac solution unpack ...`
 - `jq empty ...`
+- `python3 scripts/validate-workflow-json.py ...`
 - `rg ...`
 - `git diff --check`
 
 Impacting commands:
 
 - `pac solution import --publish-changes --force-overwrite`
+- `pac solution import --stage-and-upgrade`
+- `pac solution import --skip-dependency-check`
 - `pac solution publish`
+- `pac solution delete`
+- `pac solution upgrade`
+- `pac solution sync`
+- `pac solution add-solution-component`
+- `pac auth select` when followed by tenant-impacting commands
 - `m365 flow enable`
 - `m365 flow disable`
 - `m365 flow remove`
@@ -149,6 +164,10 @@ When reporting completion, separate:
 
 - changed files, flows, actions, expressions, and solution components;
 - validation actually run, such as `jq empty`, `pac solution pack`, re-export inspection, and real flow tests;
+- deployment settings file used or skipped;
+- pre-import drift check result;
+- whether the deployed flow remained enabled;
+- whether CATCH terminates as `Failed` or intentionally allows success;
 - tenant-impacting commands actually run, with environment and solution names;
 - checks skipped and why;
 - residual risk, rollback/recovery path, and owner action.
@@ -160,6 +179,7 @@ Never imply import, publish, deployment, re-export, or runtime flow tests were d
 - Export, unpack, inspect, edit, pack, import, and re-export: read `references/solution-workflow.md`.
 - Flow, action, scope, variable, solution, publisher prefix, connection reference, and environment variable naming: read `references/naming-conventions.md`.
 - TRY/CATCH scopes, failed-action filtering, structured payloads, and email body expressions: read `references/try-catch-logging.md`.
+- SharePoint, Dataverse, SQL, HTTP, Outlook, Teams, OCR, and AI Builder connector checks: read `references/connector-contracts.md`.
 
 Use specialized skills when relevant and available, especially Power Automate expression validation, n8n/expression syntax, client delivery guardrails, TDD, diagnosis, GitHub CI, and documentation handover skills. Load only what is needed.
 
@@ -176,6 +196,8 @@ After a significant flow change, update project docs that describe flow behavior
 - Naming convention preserved or documented.
 - Workflow JSON patched narrowly.
 - `jq empty` run on edited workflow JSON.
+- Semantic workflow checks run when available.
+- Pre-import drift checked before overwriting a target flow.
 - Pack/import/re-export/runtime checks run or explicitly skipped with reason.
 - Error path tested when TRY/CATCH or logging changed.
 - No secrets, tenant credentials, private payloads, or personal data added.

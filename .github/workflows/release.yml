@@ -16,9 +16,13 @@ jobs:
   release:
     name: Build release archive
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: Validate skill
         run: bash scripts/validate-skill.sh

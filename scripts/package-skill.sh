@@ -87,6 +87,7 @@ fi
 bash "${ROOT_DIR}/scripts/validate-skill.sh"
 
 mkdir -p "${DIST_DIR}"
+DIST_DIR="$(cd "${DIST_DIR}" && pwd)"
 STAGING_DIR="$(mktemp -d "${TMPDIR:-/tmp}/power-automate-authoring-package.XXXXXX")"
 cleanup() {
   rm -rf "${STAGING_DIR}"

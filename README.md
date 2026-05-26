@@ -2,7 +2,7 @@
 
 Agent Skill for safe Microsoft Power Automate cloud-flow authoring with Codex and Claude Code.
 
-It helps agents modify Dataverse solution workflow JSON through an export/unpack/edit/pack/import loop, with guardrails for naming conventions, `runAfter`, connection references, TRY/CATCH logging, Power Automate expressions, SharePoint/Dataverse/SQL/HTTP connectors, runtime verification, and tenant-impacting commands.
+It helps agents modify Dataverse solution workflow JSON through an export/unpack/edit/pack/import loop, with guardrails for naming conventions, `runAfter`, connection references, deployment settings, pre-import drift checks, TRY/CATCH logging, Power Automate expressions, SharePoint/Dataverse/SQL/HTTP connectors, runtime verification, and tenant-impacting commands.
 
 ## What It Is For
 
@@ -13,6 +13,7 @@ Use this skill when an agent needs to:
 - preserve connector contracts, connection references, trigger shapes, and action names;
 - define or preserve flow, action, scope, variable, solution, connection reference, and environment variable naming conventions;
 - add production-oriented TRY/CATCH logging and structured failure payloads;
+- check for portal-side drift before import and avoid silently overwriting another maker's changes;
 - verify expressions, run-after paths, idempotency, retry behavior, and runtime tests;
 - work from Codex, Claude Code, VS Code, or a local shell using `pac`, `m365`, `jq`, and `rg`.
 
@@ -27,10 +28,16 @@ power-automate-authoring/
   references/
 docs/
   how-to-vscode-codex-claude-code.md
+evals/
+  001-fix-expression.md
+  ...
 scripts/
   validate-skill.sh
+  validate-workflow-json.py
   test-install.sh
   package-skill.sh
+tests/
+  test_validate_workflow_json.py
 ```
 
 ## Install
@@ -62,6 +69,8 @@ For current Codex versions, prefer `~/.agents/skills`.
 ```bash
 bash scripts/validate-skill.sh
 bash scripts/test-install.sh
+python3 -m unittest discover -s tests
+python3 scripts/validate-workflow-json.py path/to/Workflows/<workflow-file>.json
 ```
 
 ## Package
