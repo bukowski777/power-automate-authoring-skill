@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+__MACOSX/
+
+dist/
+tmp/
+*.zip
+*.sha256
+
+.env
+.env.local

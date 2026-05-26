@@ -1,0 +1,30 @@
+name: Validate skill
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate skill package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Run repository checks
+        run: bash scripts/validate-skill.sh
+
+      - name: Run install smoke test
+        run: bash scripts/test-install.sh
+
+      - name: Build package smoke test
+        run: bash scripts/package-skill.sh --version ci --output-dir /tmp/power-automate-authoring-dist

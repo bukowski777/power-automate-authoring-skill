@@ -1,0 +1,14 @@
+interface:
+  display_name: "Power Automate Authoring"
+  short_description: "Edit Power Automate flows safely"
+  default_prompt: "Use $power-automate-authoring to modify a Power Automate flow through solution export, JSON editing, import, and verification."
+policy:
+  requires_confirmation_for:
+    - "pac solution import"
+    - "pac solution publish"
+    - "m365 flow enable"
+    - "m365 flow disable"
+    - "m365 flow remove"
+  install_notes:
+    - "Codex installs keep this metadata file."
+    - "Claude Code installs remove this metadata file."
