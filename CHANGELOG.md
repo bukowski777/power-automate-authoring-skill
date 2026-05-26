@@ -4,6 +4,8 @@ All notable changes to this skill repository should be documented here.
 
 ## Unreleased
 
+- Added Power Automate naming convention guidance for flows, actions, scopes, variables, solution publisher prefixes, connection references, and environment variables, sourced from Microsoft Learn.
+
 ## v0.1.0 - 2026-05-26
 
 - Extracted `power-automate-authoring` from the GED repository into a standalone skill repository.

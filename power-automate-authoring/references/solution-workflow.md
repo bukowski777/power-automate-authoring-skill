@@ -6,6 +6,7 @@ Use these commands as templates. Replace placeholders with project values or exp
 
 ```bash
 export PA_SOLUTION_NAME="<solution-name>"
+export PA_PUBLISHER_PREFIX="<2-to-8-char-prefix>"
 export PA_WORK_DIR="tmp/power-automate/<change-name>"
 export PA_SITE_URL="<sharepoint-site-url>"
 export PA_LIST_TITLE="<sharepoint-list-title>"
@@ -61,11 +62,22 @@ for f in "$PA_WORK_DIR"/unpacked/Workflows/*.json; do
 done
 ```
 
+## Naming Check
+
+Before editing, identify the project naming convention and publisher prefix:
+
+```bash
+rg -n "publisher|prefix|customization|connectionreference|environmentvariable" "$PA_WORK_DIR/unpacked" | sed -n '1,80p'
+rg -n "TRY_|CATCH_|FINALLY_|var[A-Z]|Compose_|Parse_|Filter_|Select_" "$PA_WORK_DIR/unpacked/Workflows" | sed -n '1,120p'
+```
+
+Use `references/naming-conventions.md` for new names. Preserve existing action names unless renaming is explicitly required and references are verified.
+
 ## Validate Edited JSON
 
 ```bash
 jq empty "$PA_WORK_DIR/unpacked/Workflows/<workflow-file>.json"
-rg -n "TRY_|CATCH_|runAfter|formatNumber|float|<field-or-action-name>" "$PA_WORK_DIR/unpacked/Workflows"
+rg -n "TRY_|CATCH_|FINALLY_|runAfter|formatNumber|float|<field-or-action-name>" "$PA_WORK_DIR/unpacked/Workflows"
 git diff --check
 ```
 

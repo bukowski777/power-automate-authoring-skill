@@ -39,6 +39,7 @@ required_files=(
   "docs/how-to-vscode-codex-claude-code.md"
   "power-automate-authoring/SKILL.md"
   "power-automate-authoring/agents/openai.yaml"
+  "power-automate-authoring/references/naming-conventions.md"
   "power-automate-authoring/references/solution-workflow.md"
   "power-automate-authoring/references/try-catch-logging.md"
 )

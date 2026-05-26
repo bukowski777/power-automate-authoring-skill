@@ -20,6 +20,7 @@ Typical triggers:
 - create, modify, debug, harden, import, export, package, or review cloud flows;
 - work with Dataverse solution exports, `Workflows/*.json`, connection references, environment variables, or solution components;
 - edit `runAfter`, scopes, trigger/action definitions, connector inputs, or Power Automate expressions;
+- define or review flow, action, scope, variable, solution, publisher prefix, connection reference, and environment variable naming conventions;
 - add or review production TRY/CATCH logging, alerting, or structured failure payloads;
 - use `pac`, `m365`, `jq`, `rg`, VS Code, Codex, or Claude Code for flow authoring;
 - verify SharePoint, Dataverse, Outlook, SQL, HTTP, OCR, or AI Builder connector behavior after a flow change.
@@ -38,6 +39,8 @@ Use the full command workflow in [references/solution-workflow.md](references/so
 
 Use [references/try-catch-logging.md](references/try-catch-logging.md) when adding or reviewing CATCH logs. It contains reusable Power Automate action JSON and expressions for `result('TRY_<domain>')`, failed-action filtering, log payload creation, and email body generation.
 
+Use [references/naming-conventions.md](references/naming-conventions.md) when creating, renaming, reviewing, or documenting flow components. Preserve the project convention first; introduce a new convention only when none exists.
+
 Before changing anything, identify the tenant/environment, solution, flow, allowed scope, connection account, deployment path, rollback option, and whether import/publish is explicitly authorized.
 
 Never store secrets, tokens, tenant credentials, private URLs, personal data, exported run payloads, or connector-specific sensitive values in docs, commits, screenshots, logs, or reusable examples.
@@ -52,7 +55,7 @@ Ask before running tenant-impacting commands such as import, publish, enable, di
 4. Export the current solution with `pac solution export`.
 5. Unpack with `pac solution unpack` into a temporary ignored folder.
 6. Locate the workflow JSON under `Workflows/`.
-7. Inspect existing actions, `runAfter`, connection references, expressions, variables, trigger shape, and solution dependencies before editing.
+7. Inspect existing naming conventions, actions, `runAfter`, connection references, expressions, variables, trigger shape, and solution dependencies before editing.
 8. Patch only the required workflow and actions.
 9. Run `jq empty` on edited workflow JSON.
 10. Pack with `pac solution pack`.
@@ -67,8 +70,23 @@ Ask before running tenant-impacting commands such as import, publish, enable, di
 - Keep changes narrow; avoid formatting whole workflow JSON if it creates noisy diffs.
 - Use `rg` and `jq` for inspection rather than manually reading huge JSON.
 - Compare related flows that reuse the same expression or pattern.
+- Preserve existing names unless renaming is part of the requested change. Renaming actions, scopes, or variables can break expressions, `runAfter`, and documentation references.
+- For new components, use the project's naming convention or `references/naming-conventions.md`.
 - Preserve idempotency and retry behavior when a flow creates, updates, deletes, or sends external records/messages.
 - Do not hardcode environment-specific IDs, URLs, emails, list names, queue names, or log destinations in the generic skill; use project configuration or placeholders.
+
+## Nomenclature / Naming
+
+Prefer descriptive, stable, tenant-neutral names that make exported workflow JSON readable without opening the designer.
+
+- Flow display names: `<Domain> - <Event> - <Outcome>` such as `Invoices - File uploaded - Create approval`.
+- Scopes: `INIT_<domain>`, `TRY_<domain>`, `CATCH_<domain>`, `FINALLY_<domain>`, or project-equivalent names.
+- Variables: `var<BusinessMeaning>` such as `varInvoiceId`, `varLogBusinessKey`, or `varSourceFileName`.
+- Compose/parse/filter/select actions: `Compose_<meaning>`, `Parse_<payload>`, `Filter_<collection>`, `Select_<shape>`.
+- Connector actions: `<Verb>_<system>_<entity>` such as `Get_SharePoint_FileMetadata` or `Create_Dataverse_Invoice`.
+- Connection references and environment variables: keep publisher prefix and project vocabulary explicit, for example `<prefix>_SharePointDocuments` or `<prefix>_TargetSiteUrl`.
+
+Choose camelCase or underscores according to the project convention and apply it consistently. Do not mix styles within the same flow unless preserving existing names.
 
 ## TRY/CATCH Pattern
 
@@ -140,6 +158,7 @@ Never imply import, publish, deployment, re-export, or runtime flow tests were d
 ## Reference Router
 
 - Export, unpack, inspect, edit, pack, import, and re-export: read `references/solution-workflow.md`.
+- Flow, action, scope, variable, solution, publisher prefix, connection reference, and environment variable naming: read `references/naming-conventions.md`.
 - TRY/CATCH scopes, failed-action filtering, structured payloads, and email body expressions: read `references/try-catch-logging.md`.
 
 Use specialized skills when relevant and available, especially Power Automate expression validation, n8n/expression syntax, client delivery guardrails, TDD, diagnosis, GitHub CI, and documentation handover skills. Load only what is needed.
@@ -154,6 +173,7 @@ After a significant flow change, update project docs that describe flow behavior
 - Target tenant/environment/solution/flow identified.
 - Scope, connection account, and import/publish authorization clear.
 - Fresh export used unless forensic review was explicitly requested.
+- Naming convention preserved or documented.
 - Workflow JSON patched narrowly.
 - `jq empty` run on edited workflow JSON.
 - Pack/import/re-export/runtime checks run or explicitly skipped with reason.

@@ -2,7 +2,7 @@
 
 Agent Skill for safe Microsoft Power Automate cloud-flow authoring with Codex and Claude Code.
 
-It helps agents modify Dataverse solution workflow JSON through an export/unpack/edit/pack/import loop, with guardrails for `runAfter`, connection references, TRY/CATCH logging, Power Automate expressions, SharePoint/Dataverse/SQL/HTTP connectors, runtime verification, and tenant-impacting commands.
+It helps agents modify Dataverse solution workflow JSON through an export/unpack/edit/pack/import loop, with guardrails for naming conventions, `runAfter`, connection references, TRY/CATCH logging, Power Automate expressions, SharePoint/Dataverse/SQL/HTTP connectors, runtime verification, and tenant-impacting commands.
 
 ## What It Is For
 
@@ -11,6 +11,7 @@ Use this skill when an agent needs to:
 - create, modify, debug, harden, package, import, export, or review Power Automate cloud flows;
 - work with Dataverse solution exports and `Workflows/*.json`;
 - preserve connector contracts, connection references, trigger shapes, and action names;
+- define or preserve flow, action, scope, variable, solution, connection reference, and environment variable naming conventions;
 - add production-oriented TRY/CATCH logging and structured failure payloads;
 - verify expressions, run-after paths, idempotency, retry behavior, and runtime tests;
 - work from Codex, Claude Code, VS Code, or a local shell using `pac`, `m365`, `jq`, and `rg`.
