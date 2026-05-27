@@ -4,6 +4,11 @@ All notable changes to this skill repository should be documented here.
 
 ## Unreleased
 
+- Clarified the skill's DEV authoring scope and TEST/PROD ALM handoff boundary.
+- Aligned OpenAI agent confirmation policy with all tenant-impacting commands listed in the skill.
+- Added warning-level workflow JSON diagnostics, `--strict`, and CATCH logging variable placement checks.
+- Updated maintenance, contribution, security, workflow, and eval documentation.
+
 ## v0.2.0 - 2026-05-26
 
 - Added Power Automate naming convention guidance for flows, actions, scopes, variables, solution publisher prefixes, connection references, and environment variables, sourced from Microsoft Learn.

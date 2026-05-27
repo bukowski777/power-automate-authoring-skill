@@ -44,6 +44,7 @@ required_files=(
   "evals/003-review-runafter.md"
   "evals/004-refuse-prod-import-without-approval.md"
   "evals/005-detect-hardcoded-secret.md"
+  "evals/rubric.md"
   "power-automate-authoring/SKILL.md"
   "power-automate-authoring/agents/openai.yaml"
   "power-automate-authoring/references/connector-contracts.md"

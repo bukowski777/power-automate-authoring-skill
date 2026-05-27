@@ -2,6 +2,17 @@
 
 Use these commands as templates. Replace placeholders with project values or exported shell variables.
 
+## DEV Scope
+
+These commands are intended for DEV authoring and controlled DEV imports. They are not a complete managed-solution release process for TEST or PROD.
+
+For TEST or PROD:
+
+- do not use this generic skill as the deployment authority;
+- follow the project ALM or release pipeline;
+- use managed solutions only through the approved release process;
+- keep deployment settings, connection references, and environment-specific values under the project's release controls.
+
 ## Variables
 
 ```bash
@@ -82,11 +93,15 @@ Use `references/naming-conventions.md` for new names. Preserve existing action n
 ```bash
 jq empty "$PA_WORK_DIR/unpacked/Workflows/<workflow-file>.json"
 python3 scripts/validate-workflow-json.py "$PA_WORK_DIR/unpacked/Workflows/<workflow-file>.json"
+# Use --strict when hardcoded URLs, emails, GUIDs, or secret-like values should fail the check.
+python3 scripts/validate-workflow-json.py --strict "$PA_WORK_DIR/unpacked/Workflows/<workflow-file>.json"
 rg -n "TRY_|CATCH_|FINALLY_|runAfter|formatNumber|float|<field-or-action-name>" "$PA_WORK_DIR/unpacked/Workflows"
 git diff --check
 ```
 
-If `scripts/validate-workflow-json.py` is not available in the current project, perform the same checks manually: `runAfter` targets and statuses, renamed action references, variable references, hardcoded URLs/emails/IDs, and connector-sensitive values.
+By default, broken `runAfter`, missing action references, and missing variables are errors. Hardcoded URLs, emails, GUID-like IDs, and secret-like values are warnings unless `--strict` is used.
+
+If `scripts/validate-workflow-json.py` is not available in the current project, perform the same checks manually: `runAfter` targets and statuses, renamed action references, variable references, hardcoded URLs/emails/IDs, connector-sensitive values, and CATCH logging variables initialized inside TRY.
 
 ## Pack
 
@@ -139,7 +154,7 @@ If the target flow changed since the initial export, stop before import and ask 
 
 ## Import
 
-Use a settings file only when one is required and reviewed.
+Use a settings file only when one is required and reviewed. `--force-overwrite` is acceptable only for controlled DEV imports after explicit user authorization, pre-import drift check, rollback/recovery option identification, and target environment confirmation. Do not present `--force-overwrite` as a generic TEST/PROD deployment command.
 
 ```bash
 if [[ -f "$PA_SETTINGS_FILE" ]]; then

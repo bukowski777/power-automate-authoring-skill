@@ -16,6 +16,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
+        # Intentionally avoid actions/checkout. This public repo does not need Git history in CI.
         run: |
           curl -fsSL "https://github.com/${GITHUB_REPOSITORY}/archive/${GITHUB_SHA}.tar.gz" -o source.tar.gz
           tar -xzf source.tar.gz --strip-components=1

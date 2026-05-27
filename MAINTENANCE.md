@@ -5,11 +5,14 @@
 ```bash
 bash scripts/validate-skill.sh
 bash scripts/test-install.sh
+python3 -m unittest discover -s tests
+python3 scripts/validate-workflow-json.py path/to/Workflows/<workflow-file>.json
+python3 scripts/validate-workflow-json.py --strict path/to/Workflows/<workflow-file>.json
 scripts/package-skill.sh --version test-package
 git diff --check
 ```
 
-`scripts/validate-skill.sh` checks required files, `SKILL.md` frontmatter, reference links, shell syntax, optional ShellCheck, secret-like patterns, and local metadata.
+`scripts/validate-skill.sh` checks required files, `SKILL.md` frontmatter, reference links, shell syntax, ShellCheck when available locally and mandatory in CI, Python validator tests, secret-like patterns, and local metadata.
 
 `scripts/test-install.sh` installs into temporary Codex, Claude Code, and legacy Codex roots. It verifies that Claude Code installs do not include `agents/openai.yaml`.
 

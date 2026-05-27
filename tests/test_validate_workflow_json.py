@@ -1,6 +1,8 @@
 import importlib.util
+import io
 import json
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -108,7 +110,7 @@ class WorkflowJsonValidatorTest(unittest.TestCase):
                 validator.collect_workflow_errors(path),
             )
 
-    def test_reports_hardcoded_sensitive_values(self):
+    def test_reports_hardcoded_sensitive_values_as_warnings_by_default(self):
         validator = load_validator()
         with TemporaryDirectory() as tmp:
             path = write_workflow(
@@ -126,15 +128,68 @@ class WorkflowJsonValidatorTest(unittest.TestCase):
                 },
             )
 
-            errors = validator.collect_workflow_errors(path)
+            diagnostics = validator.collect_workflow_diagnostics(path)
 
-            self.assertIn("Hardcoded URL detected: https://contoso.example/api/orders", errors)
-            self.assertIn("Hardcoded email address detected: ops@example.com", errors)
+            self.assertEqual([], diagnostics.errors)
+            self.assertIn(
+                "Hardcoded URL detected: https://contoso.example/api/orders",
+                diagnostics.warnings,
+            )
+            self.assertIn("Hardcoded email address detected: ops@example.com", diagnostics.warnings)
             self.assertIn(
                 "Hardcoded GUID-like identifier detected: 00000000-0000-0000-0000-000000000000",
-                errors,
+                diagnostics.warnings,
             )
-            self.assertIn("Secret-like value detected", errors)
+            self.assertIn("Secret-like value detected", diagnostics.warnings)
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                self.assertEqual(0, validator.validate_workflow(path))
+                self.assertEqual(1, validator.validate_workflow(path, strict=True))
+            self.assertIn("WARN:", stderr.getvalue())
+
+    def test_warns_when_catch_logging_variable_is_initialized_inside_try(self):
+        validator = load_validator()
+        with TemporaryDirectory() as tmp:
+            path = write_workflow(
+                Path(tmp),
+                {
+                    "TRY_Process": {
+                        "type": "Scope",
+                        "actions": {
+                            "Initialize_log_key": {
+                                "type": "InitializeVariable",
+                                "inputs": {
+                                    "variables": [
+                                        {
+                                            "name": "varLogBusinessKey",
+                                            "type": "string",
+                                            "value": "INV-001",
+                                        }
+                                    ]
+                                },
+                            }
+                        },
+                    },
+                    "CATCH_Process": {
+                        "type": "Scope",
+                        "runAfter": {"TRY_Process": ["Failed", "TimedOut"]},
+                        "actions": {
+                            "Compose_catch_log_payload": {
+                                "type": "Compose",
+                                "inputs": "@variables('varLogBusinessKey')",
+                            }
+                        },
+                    },
+                },
+            )
+
+            diagnostics = validator.collect_workflow_diagnostics(path)
+
+            self.assertEqual([], diagnostics.errors)
+            self.assertIn(
+                "CATCH_Process: logging variable varLogBusinessKey is initialized inside TRY_Process; initialize it before TRY_Process",
+                diagnostics.warnings,
+            )
 
 
 if __name__ == "__main__":

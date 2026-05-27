@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from dataclasses import dataclass
 import json
 import re
 import sys
@@ -27,6 +28,13 @@ SECRET_PATTERN = re.compile(
     re.IGNORECASE,
 )
 ALLOWED_URL_PREFIXES = ("https://schema.management.azure.com/",)
+LOGGING_VARIABLES = {"varLogBusinessKey", "varLogSourceItemId", "varLogSourceFileName"}
+
+
+@dataclass
+class WorkflowDiagnostics:
+    errors: list[str]
+    warnings: list[str]
 
 
 def extract_definition(data: dict[str, Any]) -> dict[str, Any]:
@@ -95,6 +103,15 @@ def collect_initialized_variables(actions: dict[str, Any]) -> set[str]:
     return variables
 
 
+def collect_initialized_variables_from_action(action: dict[str, Any]) -> set[str]:
+    if action.get("type") == "InitializeVariable":
+        return collect_initialized_variables({"__current__": action})
+    nested_actions = action.get("actions")
+    if isinstance(nested_actions, dict):
+        return collect_initialized_variables(nested_actions)
+    return set()
+
+
 def validate_run_after(actions: dict[str, Any], errors: list[str]) -> None:
     for collection in iter_action_collections(actions):
         same_level_names = set(collection.keys())
@@ -135,63 +152,132 @@ def validate_expression_references(
                 errors.append(f"Expression {ref_type}('{ref}') references missing action/scope")
 
 
-def validate_hardcoded_values(definition: dict[str, Any], errors: list[str]) -> None:
-    seen_errors: set[str] = set()
+def validate_hardcoded_values(definition: dict[str, Any], warnings: list[str]) -> None:
+    seen_warnings: set[str] = set()
     for text in walk_strings(definition):
         for url in URL_PATTERN.findall(text):
             if not url.startswith(ALLOWED_URL_PREFIXES):
-                seen_errors.add(f"Hardcoded URL detected: {url}")
+                seen_warnings.add(f"Hardcoded URL detected: {url}")
         for email in EMAIL_PATTERN.findall(text):
-            seen_errors.add(f"Hardcoded email address detected: {email}")
+            seen_warnings.add(f"Hardcoded email address detected: {email}")
         for guid in GUID_PATTERN.findall(text):
-            seen_errors.add(f"Hardcoded GUID-like identifier detected: {guid}")
+            seen_warnings.add(f"Hardcoded GUID-like identifier detected: {guid}")
         if SECRET_PATTERN.search(text):
-            seen_errors.add("Secret-like value detected")
-    errors.extend(sorted(seen_errors))
+            seen_warnings.add("Secret-like value detected")
+    warnings.extend(sorted(seen_warnings))
 
 
-def collect_workflow_errors(path: Path) -> list[str]:
+def collect_initialized_variables_before(actions: dict[str, Any], action_name: str) -> set[str]:
+    variables: set[str] = set()
+    for current_name, action in actions.items():
+        if current_name == action_name:
+            break
+        if isinstance(action, dict):
+            variables.update(collect_initialized_variables_from_action(action))
+    return variables
+
+
+def validate_catch_logging_variables(actions: dict[str, Any], warnings: list[str]) -> None:
+    for catch_name, catch_action in actions.items():
+        if not isinstance(catch_action, dict):
+            continue
+        run_after = catch_action.get("runAfter", {})
+        if not isinstance(run_after, dict):
+            continue
+        try_dependencies = [name for name in run_after if name in actions and name.startswith("TRY_")]
+        if not try_dependencies:
+            continue
+
+        catch_text = "\n".join(walk_strings(catch_action))
+        used_logging_variables = LOGGING_VARIABLES.intersection(
+            REF_PATTERNS["variables"].findall(catch_text)
+        )
+        if not used_logging_variables:
+            continue
+
+        for try_name in try_dependencies:
+            before_try_variables = collect_initialized_variables_before(actions, try_name)
+            try_action = actions.get(try_name)
+            initialized_inside_try = (
+                collect_initialized_variables_from_action(try_action)
+                if isinstance(try_action, dict)
+                else set()
+            )
+            for variable_name in sorted(used_logging_variables):
+                if variable_name in before_try_variables:
+                    continue
+                if variable_name in initialized_inside_try:
+                    warnings.append(
+                        f"{catch_name}: logging variable {variable_name} is initialized inside {try_name}; initialize it before {try_name}"
+                    )
+                else:
+                    warnings.append(
+                        f"{catch_name}: logging variable {variable_name} is not initialized before {try_name}"
+                    )
+
+
+def collect_workflow_diagnostics(path: Path) -> WorkflowDiagnostics:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        return [f"Invalid JSON: {exc}"]
+        return WorkflowDiagnostics(errors=[f"Invalid JSON: {exc}"], warnings=[])
 
     if not isinstance(data, dict):
-        return ["Workflow JSON root must be an object"]
+        return WorkflowDiagnostics(errors=["Workflow JSON root must be an object"], warnings=[])
 
     definition = extract_definition(data)
     actions = definition.get("actions", {})
     if not isinstance(actions, dict):
-        return ["Workflow definition actions must be an object"]
+        return WorkflowDiagnostics(
+            errors=["Workflow definition actions must be an object"],
+            warnings=[],
+        )
 
     errors: list[str] = []
+    warnings: list[str] = []
     action_names = collect_action_names(actions)
     variable_names = collect_initialized_variables(actions)
 
     validate_run_after(actions, errors)
     validate_expression_references(definition, action_names, variable_names, errors)
-    validate_hardcoded_values(definition, errors)
+    validate_hardcoded_values(definition, warnings)
+    validate_catch_logging_variables(actions, warnings)
 
-    return errors
+    return WorkflowDiagnostics(errors=errors, warnings=warnings)
 
 
-def validate_workflow(path: Path) -> int:
-    errors = collect_workflow_errors(path)
-    for error in errors:
+def collect_workflow_errors(path: Path) -> list[str]:
+    return collect_workflow_diagnostics(path).errors
+
+
+def validate_workflow(path: Path, strict: bool = False) -> int:
+    diagnostics = collect_workflow_diagnostics(path)
+    for error in diagnostics.errors:
         print(f"ERROR: {path}: {error}", file=sys.stderr)
-    return 1 if errors else 0
+    for warning in diagnostics.warnings:
+        print(f"WARN: {path}: {warning}", file=sys.stderr)
+    if diagnostics.errors:
+        return 1
+    if strict and diagnostics.warnings:
+        return 1
+    return 0
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         description="Validate common Power Automate workflow JSON authoring hazards."
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Treat warnings, such as hardcoded URLs or emails, as failures.",
+    )
     parser.add_argument("workflow", nargs="+", type=Path, help="Workflow JSON file to validate")
     args = parser.parse_args(argv)
 
     exit_code = 0
     for workflow_path in args.workflow:
-        exit_code |= validate_workflow(workflow_path)
+        exit_code |= validate_workflow(workflow_path, strict=args.strict)
     return exit_code
 
 

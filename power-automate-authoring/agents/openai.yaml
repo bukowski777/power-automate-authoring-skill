@@ -5,7 +5,14 @@ interface:
 policy:
   requires_confirmation_for:
     - "pac solution import"
+    - "pac solution import --stage-and-upgrade"
+    - "pac solution import --skip-dependency-check"
     - "pac solution publish"
+    - "pac solution delete"
+    - "pac solution upgrade"
+    - "pac solution sync"
+    - "pac solution add-solution-component"
+    - "pac auth select"
     - "m365 flow enable"
     - "m365 flow disable"
     - "m365 flow remove"

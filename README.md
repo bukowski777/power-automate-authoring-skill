@@ -1,6 +1,6 @@
 # Power Automate Authoring Skill [![Validate skill](https://github.com/bukowski777/power-automate-authoring-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/bukowski777/power-automate-authoring-skill/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Agent Skill for safe Microsoft Power Automate cloud-flow authoring with Codex and Claude Code.
+Agent Skill for safe Microsoft Power Automate cloud-flow DEV authoring with Codex and Claude Code.
 
 It helps agents modify Dataverse solution workflow JSON through an export/unpack/edit/pack/import loop, with guardrails for naming conventions, `runAfter`, connection references, deployment settings, pre-import drift checks, TRY/CATCH logging, Power Automate expressions, SharePoint/Dataverse/SQL/HTTP connectors, runtime verification, and tenant-impacting commands.
 
@@ -17,7 +17,7 @@ Use this skill when an agent needs to:
 - verify expressions, run-after paths, idempotency, retry behavior, and runtime tests;
 - work from Codex, Claude Code, VS Code, or a local shell using `pac`, `m365`, `jq`, and `rg`.
 
-This is not a tenant-admin policy guide or a licensing guide. It focuses on safe authoring and delivery of cloud-flow definitions.
+This is not a tenant-admin policy guide, licensing guide, or TEST/PROD managed-release guide. It focuses on safe DEV authoring, local validation, controlled DEV imports, and handoff to the project's ALM or release process.
 
 ## Repository Layout
 
@@ -30,6 +30,7 @@ docs/
   how-to-vscode-codex-claude-code.md
 evals/
   001-fix-expression.md
+  rubric.md
   ...
 scripts/
   validate-skill.sh
@@ -71,6 +72,7 @@ bash scripts/validate-skill.sh
 bash scripts/test-install.sh
 python3 -m unittest discover -s tests
 python3 scripts/validate-workflow-json.py path/to/Workflows/<workflow-file>.json
+python3 scripts/validate-workflow-json.py --strict path/to/Workflows/<workflow-file>.json
 ```
 
 ## Package
@@ -97,3 +99,7 @@ The release workflow validates the skill, creates the zip, and attaches it to th
 ## Related Guide
 
 The full operational guide is in [docs/how-to-vscode-codex-claude-code.md](docs/how-to-vscode-codex-claude-code.md).
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

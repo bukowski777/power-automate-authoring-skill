@@ -23,6 +23,9 @@ Avoid:
 ```bash
 bash scripts/validate-skill.sh
 bash scripts/test-install.sh
+python3 -m unittest discover -s tests
+python3 scripts/validate-workflow-json.py path/to/Workflows/<workflow-file>.json
+python3 scripts/validate-workflow-json.py --strict path/to/Workflows/<workflow-file>.json
 scripts/package-skill.sh --version test-package
 git diff --check
 ```

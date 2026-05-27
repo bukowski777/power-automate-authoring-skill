@@ -29,9 +29,13 @@ Typical triggers:
 
 Do not load the whole skill for a short conceptual Power Automate answer that does not touch a flow definition, tenant, solution package, connector contract, or runtime verification. For desktop flows, tenant governance, licensing, or admin policy questions, use only the relevant parts unless cloud-flow JSON authoring is involved.
 
+This skill is primarily for DEV authoring, local validation, and controlled DEV imports. Do not use it as the primary TEST/PROD release or managed-solution promotion guide. For TEST/PROD deployment, hand off to the project's ALM, pipeline, release, or governance process.
+
 ## Operating Defaults
 
 Work from a fresh Dataverse solution export. Do not edit stale ZIPs or old unpacked folders unless the user explicitly asks for forensic review.
+
+Default to DEV authoring and local validation. Treat import as a controlled DEV operation that requires explicit authorization, a pre-import drift check, and a rollback or recovery option.
 
 For a new cloud flow, prefer a portal-created skeleton first: create the flow in the target Power Platform solution, add the trigger and connector actions needed to create connection references, save it, then export/unpack and continue locally. Creating a full flow JSON from scratch is fragile.
 
@@ -157,6 +161,8 @@ Impacting commands:
 - `m365 flow remove`
 
 Before running impacting commands, state the expected tenant/environment/solution impact and verify afterward with a re-export or status check.
+
+Use `--force-overwrite` only for controlled DEV imports after explicit user authorization, a pre-import drift check, a rollback or recovery option, and target environment confirmation. Do not present it as a generic TEST/PROD deployment command.
 
 ## Verification Standard
 
