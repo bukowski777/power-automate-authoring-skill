@@ -1,4 +1,4 @@
-# Power Automate Authoring Skill
+# Power Automate Authoring Skill [![Validate skill](https://github.com/bukowski777/power-automate-authoring-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/bukowski777/power-automate-authoring-skill/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Agent Skill for safe Microsoft Power Automate cloud-flow authoring with Codex and Claude Code.
 
