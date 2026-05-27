@@ -4,6 +4,8 @@ All notable changes to this skill repository should be documented here.
 
 ## Unreleased
 
+## v0.2.1 - 2026-05-27
+
 - Clarified the skill's DEV authoring scope and TEST/PROD ALM handoff boundary.
 - Aligned OpenAI agent confirmation policy with all tenant-impacting commands listed in the skill.
 - Added warning-level workflow JSON diagnostics, `--strict`, and CATCH logging variable placement checks.
